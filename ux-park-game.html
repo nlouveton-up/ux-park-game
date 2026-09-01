@@ -1,0 +1,1107 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The UX Park — a playable model of user-centred design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --ink:#0E1418; --panel:#161E23; --panel-2:#1D272D; --line:#2B383F; --line-2:#3A4A53;
+  --fg:#E9EFF1; --fg-2:#9DAFB8; --fg-3:#6D8089; --focus:#5FC9D6;
+  --display:"Bricolage Grotesque",system-ui,sans-serif;
+  --body:"Instrument Sans",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--ink);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100dvh}
+.wrap{max-width:1400px;margin:0 auto;padding:20px 18px 40px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 24px;margin-bottom:16px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(28px,5.2vw,46px);line-height:.95;letter-spacing:-.025em;margin:0}
+h1 em{font-style:normal;display:block;color:var(--fg-3);font-weight:400;font-size:.42em;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.55em}
+.tag{color:var(--fg-2);max-width:56ch;font-size:14px;margin:0}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+@media(max-width:960px){.stage{grid-template-columns:minmax(0,1fr)}}
+.result{position:absolute;inset:0;background:rgba(8,12,15,.88);backdrop-filter:blur(3px);
+  display:flex;align-items:center;justify-content:center;padding:24px;z-index:3}
+.result[hidden]{display:none}
+.result-in{max-width:46ch;text-align:center}
+.result-eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;margin:0 0 6px;color:var(--fg-3)}
+.result.win .result-eyebrow{color:#58B86E}
+.result.lose .result-eyebrow{color:#E85D4E}
+.result h2{font-family:var(--display);font-size:clamp(22px,4.2vw,32px);font-weight:800;letter-spacing:-.02em;margin:0 0 10px}
+.result p{font-size:14px;color:var(--fg-2);line-height:1.6;margin:0 0 18px}
+.park{position:relative;background:linear-gradient(#1a2b33,#12202a 55%,#0f1a22);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+canvas{display:block;width:100%;height:auto;touch-action:manipulation;cursor:pointer}
+.controls{margin-top:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font-family:var(--body);font-size:13px;font-weight:500;color:var(--fg);background:var(--panel-2);border:1px solid var(--line-2);border-radius:9px;padding:8px 13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:background .13s,border-color .13s,transform .06s}
+button:hover{background:#25333A;border-color:#4A5D67}
+button:active{transform:translateY(1px)}
+button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--focus);border-color:var(--focus);color:#08171A}
+button.primary{background:var(--focus);border-color:var(--focus);color:#08171A;font-weight:600;min-width:104px;justify-content:center}
+button.primary:hover{background:#7CD9E4;border-color:#7CD9E4}
+.icon{width:13px;height:13px;flex:none;fill:currentColor}
+button:disabled{opacity:.4;cursor:not-allowed}
+button:disabled:hover{background:var(--panel-2);border-color:var(--line-2)}
+.sep{width:1px;height:26px;background:var(--line);flex:none}
+.grp{display:flex;gap:6px;align-items:center}
+.speed{display:flex;align-items:center;gap:9px;flex:1;min-width:200px}
+.speed label{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--fg-3);flex:none}
+input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;flex:1;min-width:80px;height:20px;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--line-2);border-radius:99px}
+input[type=range]::-moz-range-track{height:4px;background:var(--line-2);border-radius:99px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--focus);margin-top:-6px;border:none;cursor:pointer}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--focus);border:none;cursor:pointer}
+input[type=range]:focus-visible{outline:2px solid var(--focus);outline-offset:3px;border-radius:4px}
+.speed output{font-family:var(--mono);font-size:12.5px;min-width:38px;text-align:right;color:var(--fg-2)}
+.gauges{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:12px;margin-top:12px;align-items:start}
+@media(max-width:720px){.gauges{grid-template-columns:minmax(0,1fr)}}
+.side{display:flex;flex-direction:column;gap:12px}
+@media(min-width:961px){ .side{position:sticky;top:16px} }
+.guide{margin-top:16px}
+.guide .legend{columns:2;column-gap:26px}
+@media(max-width:760px){ .guide .legend{columns:1} }
+.guide .legend h3{column-span:all;margin-bottom:10px}
+.guide .legend p{break-inside:avoid}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+.card-swatch{height:6px;background:#E85D4E;transition:background .25s}
+.card-in{padding:16px}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-3);margin:0 0 5px;display:flex;justify-content:space-between;gap:8px}
+.card h2{margin:0 0 4px;font-family:var(--display);font-size:25px;font-weight:600;letter-spacing:-.018em}
+.card .role{margin:0 0 14px;font-size:13.5px;color:var(--fg-2)}
+.card p.desc{margin:0 0 14px;font-size:15px;color:#CBD8DE;line-height:1.72}
+.kv{border-top:1px solid var(--line);padding-top:9px}
+.kv h4{margin:0 0 6px;font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--fg-3);font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 10px}
+.chip{font-size:12px;padding:3px 8px;border-radius:99px;background:var(--panel-2);border:1px solid var(--line-2);color:var(--fg-2)}
+.out{font-size:13.5px;color:var(--fg);margin:0;line-height:1.6}
+.picker{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:10px;border-top:1px solid var(--line);background:var(--panel-2)}
+.picker button{padding:8px 0;justify-content:center;font-family:var(--mono);font-size:12px;background:transparent;border-color:transparent}
+.picker button:hover{background:rgba(255,255,255,.06)}
+.picker button[aria-current="true"]{background:rgba(255,255,255,.1);border-color:var(--line-2);color:#fff}
+.picker button i{display:block;width:100%;height:3px;border-radius:2px;margin-bottom:5px}
+.alloc{display:flex;height:9px;border-radius:99px;overflow:hidden;background:var(--panel-2);border:1px solid var(--line);margin-bottom:12px}
+.alloc i{display:block;height:100%;transition:width .12s}
+.alloc i.free{background:repeating-linear-gradient(45deg,#243038,#243038 3px,#1D272D 3px,#1D272D 6px)}
+.inv-row{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;margin-bottom:9px}
+.inv-row:last-of-type{margin-bottom:0}
+.inv-row label{font-size:12.5px;display:flex;align-items:center;gap:7px;white-space:nowrap;color:var(--fg-2)}
+.inv-row label i{width:9px;height:9px;border-radius:2px;display:inline-block;flex:none}
+.inv-row input{min-width:54px}
+#press::-webkit-slider-thumb{background:var(--prs,#F0A63C)}
+#press::-moz-range-thumb{background:var(--prs,#F0A63C)}
+.inv-row output{font-family:var(--mono);font-size:11.5px;color:var(--fg-2);min-width:36px;text-align:right}
+.press-row{border-top:1px solid var(--line);padding-top:10px;margin-top:11px}
+.inv-note{font-size:12px;color:var(--fg-3);margin:11px 0 0;line-height:1.5;border-top:1px solid var(--line);padding-top:9px}
+.dash{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:7px}
+.dash div{background:var(--panel-2);border-radius:8px;padding:8px 9px}
+.dash b{display:block;font-family:var(--mono);font-size:19px;font-weight:500;line-height:1.15}
+.dash span{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3)}
+.dash-note{font-size:12px;color:var(--fg-3);margin:10px 0 0;line-height:1.5}
+.legend{font-size:13px;color:var(--fg-2);line-height:1.6}
+.legend h3{margin:0 0 7px;font-family:var(--display);font-size:14px;font-weight:600;color:var(--fg)}
+.legend p{margin:0 0 8px}
+.legend p:last-child{margin:0}
+.legend kbd{font-family:var(--mono);font-size:11px;background:var(--panel-2);border:1px solid var(--line-2);border-bottom-width:2px;border-radius:5px;padding:1px 5px;color:var(--fg)}
+footer{margin-top:22px;font-size:12px;color:var(--fg-3);max-width:74ch}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+
+<div class="wrap">
+<header>
+  <h1><em>A playable model</em>The UX Park</h1>
+  <p class="tag">The product holds 80 latent <b>leads</b> — a fixed list the team cannot see, each carrying a potential satisfaction between −1 and +1. The positive ones are real <b>features</b>; the rest, about half, are <b>non-features</b> best never shipped. Research uncovers them, framing sorts them, ideation and prototyping improve them, testing filters them. Five sliders share a <b>fixed budget of 2.50</b> — raising one station forces another down. A sixth sets the schedule pressure. Delivered satisfaction earns money; every sprint costs some. <b>Run out of capital and you lose; reveal the whole catalogue and you win.</b></p>
+</header>
+
+<div class="stage">
+  <div>
+    <div class="park">
+      <div class="result" id="result" hidden>
+        <div class="result-in">
+          <p class="result-eyebrow" id="resEyebrow">Game over</p>
+          <h2 id="resTitle"></h2>
+          <p id="resBody"></p>
+          <button class="primary" id="btnAgain">New game</button>
+        </div>
+      </div>
+      <canvas id="c" aria-label="Isometric animation: users enter through two outer gates, cardboard boxes of leads travel five stations then lift off from a central rocket, or are rejected and pass back through Research"></canvas>
+    </div>
+
+    <div class="controls">
+      <button class="primary" id="btnPlay" aria-keyshortcuts="Space">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path id="ppIcon" d="M3.5 2.5h3.5v11H3.5zM9 2.5h3.5v11H9z"/></svg>
+        <span id="ppLabel">Pause</span>
+      </button>
+      <button id="btnLabels" aria-pressed="true">Labels</button>
+      <button id="btnReset"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a6 6 0 105.2 3H11a4 4 0 11-.6-4.2L8.5 3H14V-2.5z"/></svg>Reset</button>
+      <div class="speed">
+        <label for="spd">Speed</label>
+        <input id="spd" type="range" min="0" max="300" value="100" step="5">
+        <output id="spdOut">1.00×</output>
+      </div>
+    </div>
+
+    <div class="gauges">
+    <div class="card"><div class="card-in">
+      <p class="eyebrow"><span>Resources by station</span><span id="invTotal">1.75 / 2.50</span></p>
+      <div class="alloc" id="allocBar" aria-hidden="true"></div>
+      <div id="invRows"></div>
+      <div class="inv-row press-row">
+        <label for="press"><i style="background:#F0A63C"></i>Schedule pressure</label>
+        <input id="press" type="range" min="0" max="100" step="1" value="35"
+               title="Three-week sprints. The higher the pressure, the more often stations get skipped.">
+        <output id="outPress">35%</output>
+      </div>
+      <p class="inv-note" id="invNote"></p>
+    </div></div>
+
+    <div class="card"><div class="card-in">
+      <p class="eyebrow"><span>Leads</span><span id="dSprints">sprint 0</span></p>
+      <div class="dash">
+        <div><b id="dTotal">0</b><span>leads explored</span></div>
+        <div><b id="dShipped">0</b><span>shipped</span></div>
+        <div><b id="dBacklog">0</b><span>in backlog</span></div>
+        <div><b id="dDropped">0</b><span>dropped</span></div>
+        <div><b id="dCap">195</b><span>capital</span></div>
+        <div><b id="dSat">0.0</b><span>total satisfaction</span></div>
+        
+      </div>
+      <p class="dash-note" id="dNote"></p>
+    </div></div>
+    </div>
+  </div>
+
+  <aside class="side">
+    <div class="card">
+      <div class="card-swatch" id="swatch"></div>
+      <div class="card-in">
+        <p class="eyebrow"><span id="stgNum">Station 01</span><span id="stgDia">Discover</span></p>
+        <h2 id="stgName">Research</h2>
+        <p class="role" id="stgRole">Understand the people and the problem</p>
+        <p class="desc" id="stgDesc"></p>
+        <div class="kv">
+          <h4>Methods at this station</h4>
+          <div class="chips" id="stgChips"></div>
+          <h4>What leaves the building</h4>
+          <p class="out" id="stgOut"></p>
+        </div>
+      </div>
+      <div class="picker" id="picker" role="group" aria-label="Choose a station"></div>
+    </div>
+
+  </aside>
+</div>
+
+<div class="card guide"><div class="card-in legend">
+      <h3>How to read the park</h3>
+      <p>Two <b>outer gates</b>, always open. To the north, users reveal new leads and unblock the ones coming back from a rejection; to the west, they judge what is put in front of them.</p>
+      <p>The <b>selected station</b> is circled by an animated ring on the map, in the colour of its card. Click a building, or press <kbd>1</kbd>–<kbd>5</kbd>.</p>
+      <p><b>Lead, feature, non-feature.</b> The catalogue holds 80 leads; the only way to learn which are worth anything is to explore them. A lead with positive potential is a feature, one with negative potential a non-feature. The counters say "leads" until the verdict is in.</p>
+      <p>The ring under each box shows its delivered satisfaction: <b>potential × real + differentiation</b>. Red, the lead will harm users; grey, it will do nothing; green, it is worth building. You can see that truth — the team has to estimate it.</p>
+      <p>Every <b>three-week sprint</b> reveals a sample of leads and drops it into the backlog, whether or not it can be absorbed. Leads enter the park as visits happen and space allows, twelve at a time; the rest piles up. <b>Schedule pressure</b> makes stations get skipped: their effect is lost for that lap, and the station roof fades.</p>
+      <p>A <b>non-feature</b> that reaches production costs four times what a feature earns. That is what the two filters are for, and not funding them is paid in cash.</p>
+      <p>Two filters, different in kind. At <b>Framing</b>, a lead can be <b>dropped</b>: the box turns grey and vanishes. At <b>Testing</b>, it is merely <b>rejected</b> and goes round again. Killing an idea at Framing costs one segment; killing it at Testing costs a full lap.</p>
+      <p>At Testing, the lead waits for a user to show up. Kept, it lifts off. Rejected, it goes round again and gains more real satisfaction and differentiation — but a firmly negative potential never recovers: after six laps, it is abandoned.</p>
+      <p>The <b>budget is fixed</b>: the bar at the top of the panel shows the split, the hatched part what is left unspent. The game opens on the allocation of a team that builds first and talks to nobody — 0.75 of the budget sits idle and nothing catches the non-features. Redoing it is your job: left alone it wins about one game in five, against nearly three in four once the whole budget is spent.</p>
+      <p><b>Capital</b> starts at 195. Each sprint takes 8 plus 6 per unit of allocated resource; each release pays 75 times the satisfaction delivered — and a <b>shipped non-feature costs four times</b> what a good one earns, at equal satisfaction. Nothing pays for time passing: one more sprint is one sprint lost.</p>
+      <p>The trap is the opening — you pay for a dozen sprints before the first release. Rushing research reveals the catalogue fast but funds nothing: it is the most common way to go bankrupt. Click a building to inspect it. <kbd>Space</kbd> pauses, <kbd>1</kbd>–<kbd>5</kbd> opens a station card.</p>
+    </div></div>
+
+<footer>The geometry encodes the double diamond: the path widens mid-segment, where the work diverges, and pinches at each station, where it converges. Iteration has no building — it is one more lap of the circuit, which is what it actually is. The product draws 80 potential satisfactions uniformly between −1 and +1: half the latent leads are non-features before any sorting, which is a convenient working assumption, not a measurement. The coefficients are invented to make a causal chain visible; no figure here is a benchmark to quote.</footer>
+
+</div>
+
+<script>
+(() => {
+"use strict";
+document.documentElement.lang = "en";
+const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ================= content ================= */
+const STAGES = [
+  { name:"Research", role:"Understand the people and the problem", dia:"Discover · north gate", color:"#E85D4E",
+    desc:"The entrance, and the point of return. The product holds a fixed list of latent leads, unknown to the team. A wider sample reveals more of them per sprint — but the draw stays uniform: research does not choose what it finds, and brings back as many non-features as features. Past the park's capacity, the surplus piles up in the backlog.",
+    methods:["Interviews","Field studies","Analytics","Competitive audit"],
+    out:"A lead from the catalogue, and a potential nobody knows yet." },
+  { name:"Framing", role:"Decide which problem is worth solving", dia:"Define", color:"#F0A63C",
+    desc:"The filter on potential satisfaction. The team estimates it without knowing it: investing reduces the error and raises the bar. Run it low and non-features get through; run it high and you cut the harmful, then the merely mediocre, at the risk of throwing away sound leads. Cutting here costs one segment; cutting at Testing costs a lap.",
+    methods:["Personas","Journey maps","Affinity mapping","Problem statement"],
+    out:"A stated problem — or a box sent to the skip." },
+  { name:"Ideation", role:"Generate more options than you need", dia:"Develop", color:"#E9D24A",
+    desc:"Diverge deliberately, then choose. This station produces <b>differentiation</b>, drawn at random on each pass: a bonus, but sometimes a penalty, because an ideation session can produce a bad idea. Investing shifts the expected value upward without removing the risk — run it low and ideation degrades the lead more often than it improves it.",
+    methods:["Sketching","Crazy 8s","How might we","Design studio"],
+    out:"A differentiated lead — or one spoiled by a bad idea." },
+  { name:"Prototype", role:"Make the idea cheap enough to be wrong", dia:"Develop", color:"#58B86E",
+    desc:"Build the smallest thing a real person can misunderstand. This station raises the <b>real satisfaction factor</b>, with diminishing returns: the share of the potential actually delivered. A multiplier, then — building a harmful lead better makes it more harmful.",
+    methods:["Wireframes","Clickable prototype","Design system","Draft content"],
+    out:"Something testable — not something finished." },
+  { name:"Testing", role:"The verdict", dia:"Deliver · west gate", color:"#3E9BD6",
+    desc:"The second gate. The lead waits for a user to be present: with nobody to judge, nothing ships. Real satisfaction is measured here, with an error that investment reduces, and kept above a threshold that investment raises. Too little testing lets duds through; too much rejects good work and swells the backlog.",
+    methods:["Usability testing","A/B tests","Heuristic evaluation","Accessibility audit"],
+    out:"A decision: lift off, or go round again." }
+];
+
+/* ================= resources, pressure, sprint ================= */
+/* Deliberately poor opening allocation: that of a team which builds first
+   and talks to nobody. It also leaves 0.75 of the budget idle. Left alone,
+   it wins about one game in five. */
+let INV = [0.20, 0.20, 0.30, 0.80, 0.20];   /* resources invested per station */
+/* Fixed budget shared by the five stations. Under-allocating is allowed:
+   it is the only way to save resources. */
+const BUDGET = 2.5;
+const allocated = () => INV.reduce((a,b)=>a+b, 0);
+const freeBudget = () => Math.max(0, BUDGET - allocated());
+let PRESSURE = 0.35;                    /* schedule pressure */
+const N_ST = 5, IDX_RECH = 0, IDX_CADRAGE = 1, IDX_IDEE = 2, IDX_PROTO = 3, IDX_TEST = 4;
+
+/* ---------------- economy ----------------
+   Each sprint costs a fixed amount plus the resources committed.
+   Out of capital: lost. Whole catalogue revealed: won. */
+const CAPITAL_START = 195;
+const SPRINT_FIXED  = 8;      /* unavoidable cost of a sprint */
+const SPRINT_UX     = 6;      /* cost per unit of allocated resource */
+/* One-off payment on release, proportional to the satisfaction delivered.
+   A recurring revenue would reward slowness — here every extra sprint costs,
+   and nothing pays for time passing. */
+const REV_PER_SAT   = 75;
+/* A shipped non-feature weighs more than a feature earns: support load,
+   churn, repairs. The damage is counted at a multiple. */
+const HARM_MULT     = 4;
+let capital = CAPITAL_START, outcome = null;   /* null | "won" | "lost" */
+
+const SPRINT  = 3.0;   /* sprint length, in weeks */
+const WIP_MAX = 12;    /* leads in the park at once */
+
+/* Schedule pressure makes stations get skipped; investment protects. */
+const VULN = [0, 0.42, 0.52, 0.24, 0];
+const pSkip = k => Math.min(0.90,
+  VULN[k] * Math.pow(1 - INV[k], 1.2) * (0.30 + 1.60 * PRESSURE));
+
+/* --- The product ---
+   The product holds a fixed list of latent *leads*, each with a potential
+   satisfaction drawn once and for all. Neither the list nor the values are
+   known to the team: research uncovers them one at a time.
+   A lead with positive potential is a feature; negative, a non-feature.
+   The draw being uniform over [-1,1], the catalogue holds half of each. */
+const CATALOG_SIZE = 80;
+let catalog = [], discovered = 0, optimum = 0;
+function buildCatalog(){
+  catalog = Array.from({length: CATALOG_SIZE}, () => Math.random()*2 - 1);
+  discovered = 0;
+  optimum = catalog.reduce((a,v) => a + Math.max(0, v), 0);
+}
+
+/* --- Research: sample size ---
+   A wider sample surfaces more leads per sprint. The draw stays uniform:
+   research does not choose what it finds, it reveals. */
+const sampleSize = () => Math.max(1, Math.round(1 + 4 * INV[IDX_RECH]));
+
+/* --- Framing: filter on potential satisfaction, estimated with error --- */
+const frameNoise = iters => (0.08 + 0.62 * (1 - INV[IDX_CADRAGE])) * Math.pow(0.62, iters);
+/* The bar must be genuinely permissive when nothing is invested: otherwise a
+   free filter removes the non-features and investment buys nothing. */
+const frameBar   = () => -0.45 + 0.75 * INV[IDX_CADRAGE];
+
+/* --- Ideation: differentiation, bonus OR penalty ---
+   An ideation session can produce a bad idea. Investing shifts the expected
+   value upward without removing the risk: run low, ideation degrades the lead
+   more often than it improves it. */
+const DIFF_MAX  = 0.45;
+const IDEA_SPREAD = 0.30;
+const ideaDelta = () =>
+  (-0.10 + 0.32 * INV[IDX_IDEE]) + (Math.random()*2 - 1) * IDEA_SPREAD;
+
+/* --- Prototype: real satisfaction factor, diminishing returns --- */
+const protoGain = () => 0.20 + 0.60 * INV[IDX_PROTO];
+
+/* --- Testing: filter on real satisfaction, measured with error --- */
+const testNoise = () => 0.04 + 0.46 * (1 - INV[IDX_TEST]);
+const testBar   = () => -0.25 + 0.55 * INV[IDX_TEST];
+
+const MAX_ITERS = 6;   /* beyond this, the lead is abandoned */
+
+/* gaussian draw (Box-Muller) */
+function gauss(sigma){
+  let u=0, v=0;
+  while (u===0) u = Math.random();
+  while (v===0) v = Math.random();
+  return sigma * Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*v);
+}
+
+/* ================= geometry ================= */
+const GRID = 26, CX = 12.5, CY = 12.5;
+const R_RING = 7.0, R_GATE = 12.2;
+const TW = 32, TH = 16, ZH = 21;
+let scale = 1, ox = 0, oy = 0, W = 900, H = 560, dpr = 1;
+
+const rad = d => d * Math.PI / 180;
+const polar = (r,d) => [CX + r*Math.cos(rad(d)), CY + r*Math.sin(rad(d))];
+const stAngle = i => 270 + i * (360 / N_ST);
+
+const stations = STAGES.map((s,i) => {
+  const [x,y] = polar(R_RING, stAngle(i));
+  return { i, x, y, color:s.color, name:s.name, porte:(i===IDX_RECH||i===IDX_TEST), visits:0, skips:0, pulse:0 };
+});
+const GATES = [
+  { st:IDX_RECH, deg:stAngle(IDX_RECH), label:"RESEARCH GATE" },
+  { st:IDX_TEST, deg:stAngle(IDX_TEST), label:"TESTING GATE" }
+].map(g => { const [x,y] = polar(R_GATE, g.deg); return { st:g.st, deg:g.deg, label:g.label, x, y }; });
+
+const cvs = document.getElementById("c"), ctx = cvs.getContext("2d");
+function resize(){
+  const box = cvs.parentElement.getBoundingClientRect();
+  W = Math.max(300, Math.round(box.width));
+  H = Math.round(Math.max(360, Math.min(680, W * 0.68)));
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cvs.width = W*dpr; cvs.height = H*dpr; cvs.style.height = H+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  scale = Math.max(0.38, Math.min(W/(GRID*TW*2), H/(GRID*TH*2+180)) * 1.72);
+  ox = W/2; oy = H/2 - (CX+CY)*TH*scale + 30;
+}
+const iso = (x,y,z) => [ ox + (x-y)*TW*scale, oy + (x+y)*TH*scale - (z||0)*ZH*scale ];
+function poly(pts, fill){
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i=1;i<pts.length;i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
+}
+function shade(hex,k){
+  const n=parseInt(hex.slice(1),16); let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  if (k>=0){ r+=(255-r)*k; g+=(255-g)*k; b+=(255-b)*k; } else { r*=(1+k); g*=(1+k); b*=(1+k); }
+  return "rgb("+(r|0)+","+(g|0)+","+(b|0)+")";
+}
+function mix(a,b,k){
+  const A=parseInt(a.slice(1),16), B=parseInt(b.slice(1),16);
+  const r=((A>>16&255)*(1-k)+(B>>16&255)*k)|0, g=((A>>8&255)*(1-k)+(B>>8&255)*k)|0, bl=((A&255)*(1-k)+(B&255)*k)|0;
+  return "#"+((1<<24)+(r<<16)+(g<<8)+bl).toString(16).slice(1);
+}
+function hash(x,y){ let h=x*374761393+y*668265263; h=(h^(h>>13))*1274126177; return ((h^(h>>16))>>>0)/4294967296; }
+/* Ring colour: delivered satisfaction, from harmful to beneficial.
+   The viewer sees the truth the team has to estimate. */
+const effColor = v => v < -0.15 ? "#E85D4E" : v < 0.05 ? "#8A939A"
+                    : v < 0.35 ? "#C9A24A" : v < 0.6 ? "#7FB05A" : "#4FC08D";
+const USER_COLOR = "#8FB3C4";
+
+/* double diamond: pinched at stations, widest mid-segment */
+function halfWidth(deg){
+  const seg = 360 / N_ST;
+  const a = ((deg - 270) % seg + seg) % seg;
+  const d = Math.min(a, seg - a) / (seg/2);
+  return (0.62 + 1.30 * Math.sin(Math.PI * d / 2)) / 2;
+}
+
+/* ================= ground ================= */
+const GRASS = ["#79A857","#6F9E4E","#83B061","#719F52","#7CAB5B"];
+const PATHC = ["#DCC9A2","#D4C098","#E1D0AB"];
+let tiles = [];
+function distToSpoke(px,py,deg,r0,r1){
+  const [ax,ay]=polar(r0,deg), [bx,by]=polar(r1,deg);
+  const dx=bx-ax, dy=by-ay, L=dx*dx+dy*dy;
+  let s=((px-ax)*dx+(py-ay)*dy)/L; s=Math.max(0,Math.min(1,s));
+  return Math.hypot(px-(ax+dx*s), py-(ay+dy*s));
+}
+function buildGround(){
+  tiles=[];
+  for (let x=0;x<GRID;x++){
+    tiles[x]=[];
+    for (let y=0;y<GRID;y++){
+      const px=x+.5, py=y+.5, dx=px-CX, dy=py-CY, r=Math.hypot(dx,dy);
+      let deg=Math.atan2(dy,dx)*180/Math.PI; if (deg<0) deg+=360;
+      let t="grass", c=GRASS[(hash(x,y)*GRASS.length)|0];
+      if (Math.abs(r-R_RING) < halfWidth(deg)){ t="path"; c=PATHC[(hash(x,y)*3)|0]; }
+      if (t==="grass" && r < 2.2){ t="pad"; c=hash(x,y)>.5?"#C4C7C0":"#BCC0B9"; }
+      if (t==="grass"){
+        for (const g of GATES) if (distToSpoke(px,py,g.deg,R_RING,R_GATE) < 0.55){ t="gate"; c="#D2C3A2"; }
+      }
+      if (t==="grass" && distToSpoke(px,py,stAngle(IDX_TEST),2.2,R_RING) < 0.5){ t="launch"; c="#C8D2D6"; }
+      let prop=null;
+      if (t==="grass" && r>2.6 && r<R_GATE-0.6){
+        const h=hash(x*7+3,y*13+5);
+        if (h>.915) prop={kind:"tree",v:hash(x,y+99)};
+        else if (h>.888) prop={kind:"bush",v:hash(x+5,y)};
+      }
+      tiles[x][y]={t,c,prop};
+    }
+  }
+}
+
+/* ================= state ================= */
+let packages = [], users = [], particles = [];
+let nextId = 1;
+let stats = { born:0, shipped:0, dropped:0, rejects:0, iterSum:0, sprints:0,
+              satSum:0, harmful:0, caught:0, given:0, skips:0, missed:0,
+              earned:0, spent:0, harmSum:0 };
+let statsDirty = true;
+let backlog = [], sprintTimer = 0, resources = 0;
+let gateTimers = [0,0];
+let rocket = { state:"ready", z:0, t:0 };
+let running = !REDUCED, speed = 1, showLabels = true, t = 0;
+let selected = 0;   /* station whose card is open */
+
+const VISIT_PERIOD = 4.2;    /* weeks between visits, per gate */
+const SESSION = 2.2;         /* how long a user stays */
+const DWELL = () => 1.1 * (0.75 + Math.random()*0.5);
+
+function newPackage(pot){
+  return { id:nextId++, phase:"ring", st:IDX_RECH, u:0, lane:(Math.random()-.5)*0.9,
+           speed:0.100 + Math.random()*0.030,
+           /* The three attributes of a lead. The potential is intrinsic and
+              invisible to the team; the real factor says how much of it will
+              actually be delivered; differentiation is acquired. */
+           pot:  pot,
+           real: Math.random(),          /* factor in [0,1], drawn at random */
+           diff: 0,
+           iters:0, dwell:0, spin:Math.random()*6.28 };
+}
+/* Delivered satisfaction = potential × real factor, plus differentiation. */
+const satisfaction = p => p.pot * p.real + p.diff;
+
+function doStation(p,i){
+  if (i===IDX_IDEE)  p.diff = Math.max(-DIFF_MAX, Math.min(DIFF_MAX, p.diff + ideaDelta()));
+  if (i===IDX_PROTO) p.real = Math.min(1, p.real + (1 - p.real) * protoGain());
+  stations[i].visits++; stations[i].pulse = 1;
+}
+function skipStation(p,i){
+  stations[i].skips++; stats.skips++; statsDirty = true;
+  const s = stations[i];
+  particles.push({ x:s.x, y:s.y, z:1.15, vz:.85, life:1.1, color:"#E85D4E", txt:"skipped" });
+}
+function packagePos(p){
+  if (p.phase==="work" || p.phase==="wait"){
+    const s = stations[p.st];
+    return [s.x + p.lane*0.55, s.y + p.lane*0.55];
+  }
+  if (p.phase==="drop"){ const st = stations[IDX_CADRAGE]; return [st.x + p.lane*0.55, st.y + p.lane*0.55]; }
+  if (p.phase==="ring") return polar(R_RING + p.lane, 270 + p.u*360);
+  if (p.phase==="toPad"){
+    const a=stations[IDX_TEST];
+    const tx = CX + p.lane*0.75, ty = CY + p.lane*0.75;
+    return [a.x + (tx-a.x)*p.u, a.y + (ty-a.y)*p.u];
+  }
+  return [CX,CY];
+}
+
+/* ================= users ================= */
+function spawnVisit(gi){
+  const g = GATES[gi], st = stations[g.st];
+  const n = 1 + (Math.random()*2|0);
+  for (let k=0;k<n;k++){
+    users.push({ x:g.x, y:g.y, ex:g.x, ey:g.y, link:g.st, state:"in", t:0,
+                 tx: st.x + (Math.random()-.5)*1.5, ty: st.y + (Math.random()-.5)*1.5,
+                 bob:Math.random()*6.28 });
+  }
+}
+const usersAt = i => users.filter(u => u.state==="at" && u.link===i).length;
+/* Every sprint drops the leads revealed by the sample into the backlog,
+   whether or not the park can absorb them. This is where overload shows. */
+function runSprint(){
+  stats.sprints++;
+  capital -= SPRINT_FIXED + SPRINT_UX * allocated();
+  stats.spent += SPRINT_FIXED + SPRINT_UX * allocated();
+  const n = Math.min(sampleSize(), CATALOG_SIZE - discovered);
+  for (let i=0;i<n;i++) backlog.push(catalog[discovered++]);
+  stats.born += n;
+  statsDirty = true;
+}
+function stepUsers(dt){
+  for (let gi=0; gi<GATES.length; gi++){
+    gateTimers[gi] += dt;
+    if (gateTimers[gi] > VISIT_PERIOD){ gateTimers[gi] = 0; spawnVisit(gi); }
+  }
+
+  for (let i=users.length-1;i>=0;i--){
+    const u = users[i];
+    if (u.state==="in" || u.state==="out"){
+      const dx=u.tx-u.x, dy=u.ty-u.y, d=Math.hypot(dx,dy);
+      if (d<.16){
+        u.x=u.tx; u.y=u.ty;
+        if (u.state==="in"){ u.state="at"; u.t = SESSION; }
+        else users.splice(i,1);
+      } else { const sp=2.2*dt; u.x+=dx/d*sp; u.y+=dy/d*sp; }
+    } else if (u.state==="at"){
+      u.t -= dt;
+      if (u.t<=0){ u.state="out"; u.tx=u.ex; u.ty=u.ey; u.link=null; }
+    }
+  }
+}
+
+/* ================= verdict and rocket ================= */
+function verdict(p){
+  const st = stations[IDX_TEST];
+  const eff = satisfaction(p);
+  const measured = eff + gauss(testNoise());
+  if (measured >= testBar() || p.iters >= MAX_ITERS){
+    if (measured < testBar()){        /* abandoned after too many laps */
+      stats.dropped++; stats.given++; statsDirty = true;
+      particles.push({ x:st.x, y:st.y, z:1.5, vz:.7, life:1.8, color:"#8A939A", txt:"abandoned" });
+      p.phase="drop"; p.dropT = 0;
+      return;
+    }
+    particles.push({ x:st.x, y:st.y, z:1.5, vz:.7, life:1.5, color:"#5FC9D6",
+                     txt:"passed " + (eff>=0?"+":"") + eff.toFixed(2) });
+    p.phase = "toPad"; p.u = 0;
+  } else {
+    p.iters++; stats.rejects++; statsDirty = true;
+    particles.push({ x:st.x, y:st.y, z:1.5, vz:.7, life:1.7, color:"#E85D4E", txt:"rejected" });
+    p.phase = "ring";
+    p.u = IDX_TEST / N_ST;
+  }
+}
+function stepRocket(dt){
+  if (rocket.state==="lift"){
+    rocket.t += dt; rocket.z += (1.6 + rocket.t*5.2)*dt;
+    if (rocket.z > 12){ rocket.state="gone"; rocket.t=0; }
+  } else if (rocket.state==="gone"){
+    rocket.t += dt;
+    if (rocket.t > 0.7){ rocket.state="ready"; rocket.z=0; rocket.t=0; }
+  }
+}
+
+/* ================= simulation ================= */
+function endGame(kind){
+  if (outcome) return;
+  outcome = kind; statsDirty = true;
+  setRunning(false);
+  const box = $("result");
+  $("resTitle").textContent = kind === "won" ? "Product fully explored" : "Out of capital";
+  $("resBody").textContent = kind === "won"
+    ? "All " + CATALOG_SIZE + " leads were explored in " + stats.sprints
+      + " sprints. Satisfaction delivered: " + stats.satSum.toFixed(1)
+      + " out of a positive potential of " + optimum.toFixed(1)
+      + ", or " + Math.round(stats.satSum/optimum*100) + "%. Capital left: "
+      + Math.round(capital) + "."
+    : "The money ran out after " + stats.sprints + " sprints, with "
+      + discovered + " of " + CATALOG_SIZE + " leads explored. "
+      + "Delivered satisfaction (" + stats.satSum.toFixed(1)
+      + ") was not earning enough to pay for the sprints.";
+  box.className = "result " + (kind === "won" ? "win" : "lose");
+  box.hidden = false;
+}
+
+function step(dt){
+  if (outcome) return;
+  t += dt;
+  sprintTimer += dt;
+  while (sprintTimer >= SPRINT){ sprintTimer -= SPRINT; runSprint(); }
+  resources += dt * allocated();
+  if (capital <= 0){ capital = 0; endGame("lost"); return; }
+  if (discovered >= CATALOG_SIZE) endGame("won");
+  stepUsers(dt);
+  stepRocket(dt);
+
+  if (usersAt(IDX_RECH) > 0){
+    /* Returning rejects come first: research is reopened for them. */
+    for (const p of packages){
+      if (p.phase==="wait" && p.st===IDX_RECH){
+        doStation(p, IDX_RECH); p.phase="work"; p.dwell=DWELL(); p.wait=0;
+      }
+    }
+    
+    /* The backlog drains into the park as visits happen and space allows. */
+    let k = 0;
+    while (backlog.length > 0 && packages.length < WIP_MAX){
+      const pot = backlog.shift(); statsDirty = true;
+      const p = newPackage(pot);
+      doStation(p, IDX_RECH);
+      p.phase="work"; p.st=IDX_RECH; p.dwell = DWELL() + k*0.5;
+      packages.push(p); k++;
+    }
+  }
+
+  for (let n=packages.length-1; n>=0; n--){
+    const p = packages[n];
+    if (p.phase==="wait"){
+      p.wait = (p.wait||0) + dt;
+      if (p.st===IDX_TEST && usersAt(IDX_TEST) > 0){
+        doStation(p, IDX_TEST); p.phase="work"; p.dwell=DWELL(); p.wait=0;
+      }
+      continue;   /* Research is served earlier, at the top of the step */
+    }
+    if (p.phase==="work"){
+      p.dwell -= dt;
+      if (p.dwell <= 0){
+        if (p.st===IDX_TEST) verdict(p);
+        else if (p.st===IDX_CADRAGE && (p.pot + gauss(frameNoise(p.iters))) < frameBar()){
+          const st = stations[IDX_CADRAGE];
+          particles.push({ x:st.x, y:st.y, z:1.4, vz:.7, life:1.7, color:"#8A939A", txt:"dropped" });
+          p.phase="drop"; p.dropT = 0;
+          stats.dropped++; statsDirty = true;
+          if (p.pot < 0) stats.caught++; else stats.missed++;
+        }
+        else { p.phase="ring"; p.u = p.st / N_ST; }
+      }
+      continue;
+    }
+    if (p.phase==="ring"){
+      const before = p.u;
+      p.u += p.speed*dt / (1 + Math.abs(p.lane)*0.35);
+      let handled = false;
+      for (let k=1;k<N_ST;k++){
+        /* The boundary must be computed exactly like the exit position of a
+           station (p.st / N_ST). With k * (1/N_ST) the result differs by one
+           ulp for k = 3 (0.6000000000000001 against 0.6): a box left Prototype
+           just short of its own boundary and crossed it again on the next
+           frame, forever. The epsilon guards against the same drift if
+           N_ST changes. */
+        const mark = k / N_ST;
+        if (before < mark - 1e-9 && p.u >= mark){
+          p.u = mark; p.st = k; handled = true;
+          if (k===IDX_TEST){ p.phase="wait"; p.wait=0; }
+          else if (Math.random() < pSkip(k)) skipStation(p,k);
+          else { doStation(p,k); p.phase="work"; p.dwell=DWELL(); }
+          break;
+        }
+      }
+      if (!handled && p.u >= 1){
+        /* Back to Research: the box waits until someone talks to users again. */
+        p.u = 0; p.st = IDX_RECH; p.phase = "wait"; p.wait = 0;
+      }
+      continue;
+    }
+    if (p.phase==="drop"){
+      p.dropT += dt;
+      if (p.dropT > 1.6) packages.splice(n,1);
+      continue;
+    }
+    if (p.phase==="toPad"){
+      p.u = Math.min(1, p.u + 0.38*dt);
+      if (p.u>=1 && rocket.state==="ready"){
+        rocket.state="lift"; rocket.z=0; rocket.t=0;
+        const eff = satisfaction(p);
+        const weighted = eff < 0 ? eff * HARM_MULT : eff;
+        stats.shipped++; stats.iterSum += p.iters;
+        stats.satSum += weighted;
+        const gain = weighted * REV_PER_SAT;
+        capital += gain; stats.earned += gain;
+        if (eff < 0){ stats.harmful++; stats.harmSum += weighted; }
+        statsDirty = true;
+        particles.push({ x:CX, y:CY, z:2.2, vz:1.0, life:1.7, color:"#5FC9D6", txt:"lift-off" });
+        packages.splice(n,1);
+      }
+    }
+  }
+
+  for (const s of stations) s.pulse = Math.max(0, s.pulse - dt*1.5);
+  for (let i=particles.length-1;i>=0;i--){
+    const q=particles[i]; q.z += q.vz*dt; q.life -= dt*.8;
+    if (q.life<=0) particles.splice(i,1);
+  }
+}
+
+/* ================= primitives ================= */
+function box(x,y,z,w,d,h,col){
+  poly([iso(x,y,z+h),iso(x+w,y,z+h),iso(x+w,y+d,z+h),iso(x,y+d,z+h)], shade(col,.13));
+  poly([iso(x,y+d,z+h),iso(x+w,y+d,z+h),iso(x+w,y+d,z),iso(x,y+d,z)], shade(col,-.16));
+  poly([iso(x+w,y,z+h),iso(x+w,y+d,z+h),iso(x+w,y+d,z),iso(x+w,y,z)], shade(col,-.34));
+}
+function roof(x,y,z,w,d,h,col){
+  const my=y+d/2;
+  poly([iso(x,y,z),iso(x+w,y,z),iso(x+w,my,z+h),iso(x,my,z+h)], shade(col,.14));
+  poly([iso(x,y+d,z),iso(x+w,y+d,z),iso(x+w,my,z+h),iso(x,my,z+h)], shade(col,-.2));
+}
+function cone(x,y,z,r,h,col){
+  const segs=8, ap=iso(x,y,z+h);
+  for (let i=0;i<segs;i++){
+    const a1=i/segs*6.283, a2=(i+1)/segs*6.283;
+    poly([ap, iso(x+r*Math.cos(a1),y+r*Math.sin(a1),z), iso(x+r*Math.cos(a2),y+r*Math.sin(a2),z)],
+         shade(col,.18-.42*((Math.sin((a1+a2)/2-.8)+1)/2)));
+  }
+}
+function cyl(x,y,z,r,h,col){
+  const segs=8, cap=[];
+  for (let i=0;i<segs;i++){
+    const a1=i/segs*6.283, a2=(i+1)/segs*6.283;
+    poly([iso(x+r*Math.cos(a1),y+r*Math.sin(a1),z+h), iso(x+r*Math.cos(a2),y+r*Math.sin(a2),z+h),
+          iso(x+r*Math.cos(a2),y+r*Math.sin(a2),z), iso(x+r*Math.cos(a1),y+r*Math.sin(a1),z)],
+         shade(col,.1-.4*((Math.sin((a1+a2)/2-.8)+1)/2)));
+  }
+  for (let i=0;i<segs;i++){ const a=i/segs*6.283; cap.push(iso(x+r*Math.cos(a),y+r*Math.sin(a),z+h)); }
+  poly(cap, shade(col,.18));
+}
+function shadowEllipse(x,y,r,alpha){
+  const p=iso(x,y,0);
+  ctx.beginPath(); ctx.ellipse(p[0],p[1],r*TW*scale,r*TH*scale,0,0,6.283);
+  ctx.fillStyle="rgba(20,35,20,"+(alpha||.20)+")"; ctx.fill();
+}
+
+/* ================= objects ================= */
+function drawRocket(){
+  shadowEllipse(CX,CY,1.55,.22);
+  cyl(CX,CY,0,1.35,.24,"#B9BDB4");
+  for (let k=0;k<3;k++){
+    const a=k/3*6.283+0.5;
+    box(CX+1.05*Math.cos(a)-.1, CY+1.05*Math.sin(a)-.1, .24,.2,.2,1.5,"#8E969B");
+  }
+  if (rocket.state==="gone") return;
+  const z = rocket.z;
+  if (rocket.state==="lift"){
+    const fl = 0.6 + Math.abs(Math.sin(t*30))*0.5;
+    cone(CX,CY,z+0.05,.42,-fl,"#F0A63C");
+    cone(CX,CY,z+0.05,.26,-fl*0.6,"#FBE3A8");
+  }
+  cyl(CX,CY,z+.24,.44,2.0,"#EFEDE6");
+  for (let k=0;k<3;k++){
+    const a=k/3*6.283+0.9;
+    box(CX+.42*Math.cos(a)-.12, CY+.42*Math.sin(a)-.12, z+.24,.24,.24,.55,"#D34C42");
+  }
+  cyl(CX,CY,z+2.24,.44,.28,"#3E9BD6");
+  cone(CX,CY,z+2.52,.44,.9,"#D34C42");
+  if (showLabels && rocket.state==="ready"){
+    const p=iso(CX,CY,4.1);
+    ctx.font="600 "+Math.max(9,10*scale)+"px 'JetBrains Mono', monospace";
+    ctx.fillStyle="#5FC9D6"; ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText("PRODUCTION", p[0], p[1]);
+  }
+}
+function drawGate(g){
+  shadowEllipse(g.x,g.y,.85);
+  box(g.x-.85,g.y-.16,0,.34,.34,1.25,"#C9BFA6");
+  box(g.x+.5,g.y-.16,0,.34,.34,1.25,"#C9BFA6");
+  box(g.x-.9,g.y-.2,1.25,1.8,.42,.22,"#9E9481");
+  if (showLabels){
+    const p=iso(g.x,g.y,2.1);
+    ctx.font="600 "+Math.max(9,10*scale)+"px 'JetBrains Mono', monospace";
+    ctx.fillStyle="#9DAFB8"; ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText(g.label, p[0], p[1]);
+  }
+}
+function drawStation(s){
+  const total = s.visits + s.skips;
+  const neglect = total>3 ? Math.min(.7, s.skips/total) : 0;
+  const c = neglect>.05 ? mix(s.color,"#5A6067",neglect) : s.color;
+  const bx = s.x-.95, by = s.y-.95;
+  shadowEllipse(s.x,s.y,1.5);
+  box(bx-.2,by-.2,0,2.3,2.3,.16,"#B9AE93");
+  box(bx,by,.16,1.9,1.9,.78,"#EFE9DC");
+  roof(bx-.18,by-.18,.94,2.26,2.26,.58,c);
+  if (s.pulse>0){
+    const p=iso(s.x,s.y,1.9);
+    ctx.beginPath();
+    ctx.ellipse(p[0],p[1],(1+(1-s.pulse)*2.4)*TW*scale*.8,(1+(1-s.pulse)*2.4)*TH*scale*.8,0,0,6.283);
+    ctx.strokeStyle=c; ctx.globalAlpha=s.pulse*.55; ctx.lineWidth=2; ctx.stroke(); ctx.globalAlpha=1;
+  }
+  const wob = REDUCED?0:Math.sin(t*2+s.i)*.07;
+  switch(s.i){
+    case 0:
+      box(s.x+.35,s.y+.35,1.52,.5,.5,1.05,"#DCD3C0");
+      cyl(s.x+.6,s.y+.6,2.57,.34,.4,c);
+      { const e=iso(s.x+.6,s.y+.6,3.16);
+        ctx.beginPath(); ctx.arc(e[0],e[1],4.2*scale,0,6.283); ctx.fillStyle="#F7F3E9"; ctx.fill();
+        ctx.beginPath(); ctx.arc(e[0],e[1],2*scale,0,6.283); ctx.fillStyle="#26333A"; ctx.fill(); }
+      break;
+    case 1:
+      box(s.x+.35,s.y+.35,1.52,.34,.34,1.4,"#E4DCC9");
+      cone(s.x+.52,s.y+.52,2.92,.34,.5,c);
+      box(s.x-.5,s.y+.38,2.05,.85,.12,.3,c);
+      break;
+    case 2:
+      cone(s.x-.35,s.y-.1,1.55,.52,.95,c);
+      cone(s.x+.45,s.y+.3,1.55,.42,.72,shade(c,-.18));
+      cone(s.x+.1,s.y+.7,1.55,.34,.55,shade(c,.16));
+      break;
+    case 3:
+      box(s.x-.55,s.y-.55,1.52,.16,.16,1.4,"#9AA3A8");
+      box(s.x+.55,s.y-.55,1.52,.16,.16,1.4,"#9AA3A8");
+      box(s.x-.55,s.y+.55,1.52,.16,.16,1.4,"#9AA3A8");
+      box(s.x-.62,s.y-.62,2.9,1.35,1.35,.1,c);
+      box(s.x+.1+wob,s.y-.9,2.5,.1,.8,.1,"#B4BCC0");
+      break;
+    case 4:
+      box(s.x-.55,s.y-.1,1.52,1.1,.7,.62,"#E4DCC9");
+      box(s.x-.42,s.y+.05,2.14,.36,.3,.5,shade(c,-.1));
+      box(s.x+.1,s.y+.05,2.14,.36,.3,.34,shade(c,.05));
+      break;
+  }
+  if (showLabels){
+    const p=iso(s.x,s.y,3.6);
+    const txt = String(s.i+1).padStart(2,"0")+"  "+s.name.toUpperCase();
+    ctx.font="600 "+Math.max(9,11*Math.min(1.3,scale))+"px 'JetBrains Mono', monospace";
+    const w=ctx.measureText(txt).width+14, h=18;
+    ctx.fillStyle="rgba(12,18,22,.80)";
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(p[0]-w/2,p[1]-h,w,h,5); else ctx.rect(p[0]-w/2,p[1]-h,w,h);
+    ctx.fill();
+    ctx.fillStyle=c; ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText(txt,p[0],p[1]-h/2+.5);
+  }
+}
+function drawTree(x,y,v){ shadowEllipse(x,y,.42); cyl(x,y,0,.1,.38,"#8A6A46"); cone(x,y,.34,.44+v*.12,.95+v*.5, v>.5?"#4E8C46":"#5E9B4E"); }
+function drawBush(x,y,v){ shadowEllipse(x,y,.3); cone(x,y,0,.32,.42+v*.2,"#619E52"); }
+function drawUser(u){
+  shadowEllipse(u.x,u.y,.2);
+  const moving = u.state==="in"||u.state==="out";
+  const bob = (moving && !REDUCED) ? Math.abs(Math.sin(t*8+u.bob))*.07 : 0;
+  cyl(u.x,u.y,bob,.13,.32,USER_COLOR);
+  const hp=iso(u.x,u.y,.40+bob);
+  ctx.beginPath(); ctx.arc(hp[0],hp[1],2.7*scale,0,6.283); ctx.fillStyle="#DCC6A6"; ctx.fill();
+  if (u.state==="at" && u.link!==null){
+    const st=stations[u.link], a=iso(u.x,u.y,.5), b=iso(st.x,st.y,1.0);
+    ctx.save(); ctx.setLineDash([3,3]);
+    ctx.strokeStyle=STAGES[u.link].color; ctx.globalAlpha=.6; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke(); ctx.restore();
+  }
+}
+function drawPackage(p){
+  const [x,y] = packagePos(p);
+  const dropping = p.phase==="drop";
+  if (dropping) ctx.globalAlpha = Math.max(0, 1 - p.dropT/1.6);
+  const moving = p.phase==="ring"||p.phase==="toPad";
+  const bob = (moving && !REDUCED) ? Math.abs(Math.sin(t*6+p.spin))*.07
+            : dropping ? -0.06*p.dropT : 0;
+  shadowEllipse(x,y,.3);
+  const w=.58;
+  box(x-w/2, y-w/2, bob, w, w, .5, dropping ? "#948C82" : "#C89A62");
+  ctx.strokeStyle = dropping ? "#6E6862" : "#9A7345"; ctx.lineWidth=Math.max(1,1.4*scale);
+  const a=iso(x-w/2,y,bob+.5), b=iso(x+w/2,y,bob+.5);
+  ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
+  const c=iso(x,y-w/2,bob+.5), d=iso(x,y+w/2,bob+.5);
+  ctx.beginPath(); ctx.moveTo(c[0],c[1]); ctx.lineTo(d[0],d[1]); ctx.stroke();
+  const fp=iso(x,y,0);
+  ctx.beginPath(); ctx.ellipse(fp[0],fp[1],.34*TW*scale,.34*TH*scale,0,0,6.283);
+  ctx.strokeStyle=effColor(satisfaction(p)); ctx.lineWidth=Math.max(1.2,1.9*scale);
+  ctx.globalAlpha=.9; ctx.stroke(); ctx.globalAlpha=1;
+  if (dropping){ ctx.globalAlpha = 1; return; }
+  ctx.textAlign="center";
+  if (p.phase==="wait"){
+    const q=iso(x,y,1.05);
+    ctx.font="500 "+Math.max(9,10*scale)+"px 'JetBrains Mono', monospace";
+    ctx.fillStyle="rgba(255,255,255,.72)";
+    ctx.fillText("waiting", q[0], q[1]);
+  } else if (p.iters>0){
+    const q=iso(x,y,1.02);
+    ctx.font="600 "+Math.max(9,10*scale)+"px 'JetBrains Mono', monospace";
+    ctx.fillStyle="#E85D4E";
+    ctx.fillText("↺"+p.iters, q[0], q[1]);
+  }
+}
+
+/* Animated ring under the station whose card is open: it ties the right-hand
+   panel explicitly to a building on the map. */
+function drawSelectionRing(){
+  const st = stations[selected];
+  if (!st) return;
+  const c = STAGES[selected].color;
+  const puls = REDUCED ? 0 : Math.sin(t*2.4);
+  const p = iso(st.x, st.y, 0.07);
+  /* 2.7 units: outside the building footprint (±1.15) and well within the
+     gap between two neighbouring stations (8.2 units of chord). */
+  const R = 2.7 + puls*0.10;
+  const rx = R * TW * scale;
+  const ry = R * TH * scale;
+
+  ctx.save();
+  /* halo diffus */
+  ctx.globalAlpha = 0.10 + (REDUCED ? 0 : (puls+1)*0.028);
+  ctx.fillStyle = c;
+  ctx.beginPath(); ctx.ellipse(p[0], p[1], rx, ry, 0, 0, 6.283); ctx.fill();
+  /* anneau pointillé tournant */
+  ctx.globalAlpha = 0.95;
+  ctx.strokeStyle = c;
+  ctx.lineWidth = Math.max(1.9, 2.8 * scale);
+  ctx.setLineDash([12, 9]);
+  ctx.lineDashOffset = REDUCED ? 0 : -t * 26;
+  ctx.beginPath(); ctx.ellipse(p[0], p[1], rx, ry, 0, 0, 6.283); ctx.stroke();
+  /* second anneau, plus fin, en sens inverse */
+  ctx.globalAlpha = 0.5;
+  ctx.lineWidth = Math.max(1.2, 1.5 * scale);
+  ctx.setLineDash([5, 13]);
+  ctx.lineDashOffset = REDUCED ? 0 : t * 18;
+  ctx.beginPath(); ctx.ellipse(p[0], p[1], rx*0.86, ry*0.86, 0, 0, 6.283); ctx.stroke();
+  ctx.restore();
+}
+
+/* ================= rendering ================= */
+function render(){
+  ctx.clearRect(0,0,W,H);
+  for (let sum=0; sum<=(GRID-1)*2; sum++){
+    for (let x=0;x<GRID;x++){
+      const y=sum-x; if (y<0||y>=GRID) continue;
+      const tl=tiles[x][y];
+      if (Math.hypot(x+.5-CX,y+.5-CY) > 13.4) continue;
+      const h = tl.t==="grass" ? 0 : .05;
+      poly([iso(x,y,h),iso(x+1,y,h),iso(x+1,y+1,h),iso(x,y+1,h)], tl.c);
+      if (tl.t==="path"||tl.t==="gate"||tl.t==="launch"){
+        poly([iso(x,y+1,h),iso(x+1,y+1,h),iso(x+1,y+1,0),iso(x,y+1,0)],"#B7A47F");
+        poly([iso(x+1,y,h),iso(x+1,y+1,h),iso(x+1,y+1,0),iso(x+1,y,0)],"#AC9873");
+      }
+    }
+  }
+  drawSelectionRing();
+
+  const draws=[];
+  for (let x=0;x<GRID;x++) for (let y=0;y<GRID;y++){
+    const pr=tiles[x][y].prop; if (!pr) continue;
+    draws.push({d:x+y, fn:()=> pr.kind==="tree"?drawTree(x+.5,y+.5,pr.v):drawBush(x+.5,y+.5,pr.v)});
+  }
+  draws.push({ d:CX+CY, fn:drawRocket });
+  for (const g of GATES) draws.push({ d:g.x+g.y, fn:()=>drawGate(g) });
+  for (const s of stations) draws.push({ d:s.x+s.y, fn:()=>drawStation(s) });
+  for (const p of packages){ const [x,y]=packagePos(p); draws.push({ d:x+y+.35, fn:()=>drawPackage(p) }); }
+  for (const u of users) draws.push({ d:u.x+u.y+.1, fn:()=>drawUser(u) });
+  draws.sort((a,b)=>a.d-b.d);
+  for (const it of draws) it.fn();
+
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  for (const p of particles){
+    const s=iso(p.x,p.y,p.z);
+    ctx.globalAlpha=Math.max(0,Math.min(1,p.life));
+    ctx.font="600 "+Math.max(10,12*scale)+"px 'JetBrains Mono', monospace";
+    ctx.fillStyle=p.color; ctx.fillText(p.txt,s[0],s[1]); ctx.globalAlpha=1;
+  }
+}
+let last = performance.now();
+function frame(now){
+  const dt = Math.min((now-last)/1000,.05); last = now;
+  if (running) step(dt*speed);
+  render();
+  updateDash();
+  requestAnimationFrame(frame);
+}
+
+/* ================= interface ================= */
+const $ = id => document.getElementById(id);
+function selectStage(i){
+  selected=i; const s=STAGES[i];
+  $("swatch").style.background=s.color;
+  $("stgNum").textContent="Station "+String(i+1).padStart(2,"0");
+  $("stgDia").textContent=s.dia;
+  $("stgName").textContent=s.name;
+  $("stgRole").textContent=s.role;
+  $("stgDesc").textContent=s.desc;
+  $("stgOut").textContent=s.out;
+  $("stgChips").innerHTML=s.methods.map(m=>'<span class="chip">'+m+"</span>").join("");
+  [...$("picker").children].forEach((b,k)=>b.setAttribute("aria-current", k===i?"true":"false"));
+}
+$("picker").innerHTML = STAGES.map((s,i)=>
+  '<button type="button" aria-current="false" title="'+s.name+'"><i style="background:'+s.color+'"></i>'+(i+1)+"</button>").join("");
+[...$("picker").children].forEach((b,i)=>b.addEventListener("click",()=>selectStage(i)));
+
+function setRunning(on){
+  running=on;
+  $("ppLabel").textContent = on?"Pause":"Play";
+  $("ppIcon").setAttribute("d", on?"M3.5 2.5h3.5v11H3.5zM9 2.5h3.5v11H9z":"M4 2.5l9 5.5-9 5.5z");
+}
+function reset(){
+  packages=[]; users=[]; particles=[];
+  nextId=1; gateTimers=[0,0];
+  rocket={state:"ready",z:0,t:0};
+  backlog=[]; sprintTimer=0; resources=0; buildCatalog();
+  capital=CAPITAL_START; outcome=null; $("result").hidden=true;
+  stats={born:0,shipped:0,dropped:0,rejects:0,iterSum:0,sprints:0,satSum:0,harmful:0,caught:0,given:0,skips:0,missed:0,earned:0,spent:0,harmSum:0}; statsDirty=true;
+  stations.forEach(s=>{ s.visits=0; s.skips=0; s.pulse=0; });
+}
+$("btnPlay").addEventListener("click",()=>setRunning(!running));
+/* ---- resource sliders ---- */
+const INV_FX = [
+  "Wider samples: more leads revealed per sprint. The draw stays uniform — you find as many non-features as features.",
+  "Filters on potential satisfaction: a less noisy estimate and a higher bar.",
+  "Raises differentiation, a satisfaction bonus added on top of potential × real.",
+  "Raises the real satisfaction factor: the share of the potential actually delivered.",
+  "Filters on real satisfaction: a more reliable measurement and a stricter threshold."
+];
+$("invRows").innerHTML = STAGES.map((st,i) =>
+  '<div class="inv-row">'
+  + '<label for="inv'+i+'"><i style="background:'+st.color+'"></i>'+st.name+'</label>'
+  + '<input id="inv'+i+'" type="range" min="0" max="100" step="1" value="'
+  + Math.round(INV[i]*100) + '" title="'+INV_FX[i]+'">'
+  + '<output id="out'+i+'">'+Math.round(INV[i]*100)+'%</output></div>').join("");
+
+function refreshInv(){
+  for (let i=0;i<N_ST;i++) $("out"+i).textContent = Math.round(INV[i]*100) + "%";
+  const used = allocated(), free = freeBudget();
+  $("invTotal").textContent = used.toFixed(2) + " / " + BUDGET.toFixed(2);
+  $("invTotal").style.color = free < 0.005 ? "#58B86E" : "#F0A63C";
+  $("allocBar").innerHTML =
+    STAGES.map((st,i) => '<i style="width:'+(INV[i]/BUDGET*100)+'%;background:'+st.color+'"></i>').join("")
+    + '<i class="free" style="width:'+(free/BUDGET*100)+'%"></i>';
+  $("invNote").textContent =
+    "Sample: " + sampleSize() + " lead" + (sampleSize()>1?"s":"")
+    + " revealed per " + SPRINT + "-week sprint. "
+    + "Framing drops below " + frameBar().toFixed(2) + " estimated potential. "
+    + "Testing keeps above " + testBar().toFixed(2) + " measured satisfaction. "
+    + (free > 0.005
+        ? "Unspent budget: " + free.toFixed(2) + " — saved, but doing nothing."
+        : "Budget fully allocated: raising one station forces another down.");
+}
+for (let i=0;i<N_ST;i++){
+  $("inv"+i).addEventListener("input", e => {
+    /* The budget cannot be exceeded: the value is clamped to what is left and
+       written back to the slider so the handle does not drift. */
+    const wanted = e.target.value/100;
+    const ceiling = INV[i] + freeBudget();
+    INV[i] = Math.min(wanted, ceiling);
+    e.target.value = Math.round(INV[i]*100);
+    refreshInv(); statsDirty = true;
+  });
+}
+$("press").addEventListener("input", e => {
+  PRESSURE = e.target.value/100;
+  const col = PRESSURE < .35 ? "#58B86E" : PRESSURE < .7 ? "#F0A63C" : "#E85D4E";
+  $("outPress").textContent = Math.round(PRESSURE*100) + "%";
+  $("outPress").style.color = col;
+  e.target.style.setProperty("--prs", col);
+  statsDirty = true;
+});
+
+/* ---- dashboard, refreshed only when a counter moves ---- */
+const fr1 = n => (n<0?"−":"+") + Math.abs(n).toFixed(1);
+const fr2 = n => (n<0?"−":"") + Math.abs(n).toFixed(2);
+function updateDash(){
+  if (!statsDirty) return;
+  statsDirty = false;
+  $("dTotal").textContent   = discovered + " / " + CATALOG_SIZE;
+  $("dShipped").textContent = stats.shipped;
+  $("dBacklog").textContent = backlog.length;
+  $("dBacklog").style.color = backlog.length > 12 ? "#E85D4E" : backlog.length > 5 ? "#F0A63C" : "var(--fg)";
+  $("dDropped").textContent = stats.dropped;
+  $("dSat").textContent     = fr1(stats.satSum);
+  $("dSat").style.color     = stats.satSum < 0 ? "#E85D4E" : stats.satSum > 0 ? "#58B86E" : "var(--fg)";
+  $("dCap").textContent     = Math.round(capital);
+  $("dCap").style.color     = capital < 25 ? "#E85D4E" : capital < 60 ? "#F0A63C" : "#5FC9D6";
+  $("dSprints").textContent = "sprint " + stats.sprints;
+  const moy = stats.shipped ? stats.satSum/stats.shipped : 0;
+  $("dNote").textContent =
+    (stats.shipped ? "Average per release " + fr2(moy) + ", "
+       + (stats.iterSum/stats.shipped).toFixed(2) + " laps on average. " : "")
+    + (stats.harmful ? stats.harmful + " harmful release" + (stats.harmful>1?"s":"")
+        + " (" + fr1(stats.harmSum) + " satisfaction, damage ×" + HARM_MULT + "). " : "")
+    + (stats.skips ? stats.skips + " station" + (stats.skips>1?"s":"")
+        + " skipped under pressure. " : "")
+    + (stats.missed ? stats.missed + " feature" + (stats.missed>1?"s":"")
+        + " wrongly dropped. " : "")
+    + "Sprint: −" + Math.round(SPRINT_FIXED + SPRINT_UX*allocated())
+      + ". Earned: " + Math.round(stats.earned) + ". "
+    + (discovered >= CATALOG_SIZE && backlog.length === 0 && packages.length === 0
+        ? "Product fully explored. Sum of positive potentials: " + fr1(optimum)
+          + " — you captured " + Math.round(stats.satSum/optimum*100) + "%"
+          + (stats.satSum > optimum ? " (differentiation created value beyond the latent needs)." : ".")
+        : packages.length + " in circulation out of " + WIP_MAX + " slots.");
+}
+$("btnReset").addEventListener("click",()=>{ reset(); setRunning(true); });
+$("btnAgain").addEventListener("click",()=>{ reset(); setRunning(true); });
+$("btnLabels").addEventListener("click",e=>{
+  showLabels=!showLabels; e.currentTarget.setAttribute("aria-pressed",String(showLabels));
+});
+$("spd").addEventListener("input",e=>{
+  speed = e.target.value==="0" ? 0 : Math.pow(e.target.value/100,1.4);
+  $("spdOut").textContent=speed.toFixed(2)+"×";
+});
+cvs.addEventListener("click",e=>{
+  const r=cvs.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  let best=-1, bd=1e9;
+  stations.forEach(s=>{ const p=iso(s.x,s.y,1.2), d=Math.hypot(p[0]-mx,p[1]-my); if (d<bd){bd=d;best=s.i;} });
+  if (best>=0 && bd<68*scale) selectStage(best);
+});
+document.addEventListener("keydown",e=>{
+  if (e.target.tagName==="INPUT") return;
+  if (e.code==="Space"){ e.preventDefault(); setRunning(!running); }
+  else if (e.key>="1"&&e.key<="5") selectStage(+e.key-1);
+});
+document.addEventListener("visibilitychange",()=>{ if (document.hidden) setRunning(false); });
+window.addEventListener("resize",resize);
+
+resize(); buildGround(); reset(); selectStage(0); refreshInv(); $("press").dispatchEvent(new Event("input")); setRunning(!REDUCED);
+requestAnimationFrame(frame);
+})();
+</script>
